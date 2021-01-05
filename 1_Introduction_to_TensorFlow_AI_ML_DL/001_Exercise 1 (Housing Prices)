@@ -7,15 +7,12 @@ How would you create a neural network that learns this relationship so that it w
 
 Hint: Your network might work better if you scale the house price down. You don't have to give the answer 400...it might be better to create something that predicts the number 4, and then your answer is in the 'hundreds of thousands' etc.
 """
-
-```                                                                  
+                                                                 
 #モジュールのインポート
 import tensorflow as tf
 import numpy as np
 from tensorflow import keras
-```
 
-```
 # GRADED FUNCTION: house_model
 def house_model(y_new):
     xs = np.array([1.0,2.0,3.0,4.0,5.0,6.0])
@@ -27,13 +24,9 @@ def house_model(y_new):
     #データへのフィッティング(トレーニングデータ、正解データ、エポック数(epochs)="num")
     model.fit(xs,ys,epochs=500)
     return model.predict(y_new)[0]
-```
-```
+
 prediction = house_model([7.0])
 print(prediction)
-
-```                                                                                      
-
 
 """
 Expected
