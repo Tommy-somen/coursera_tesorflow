@@ -7,6 +7,8 @@ How would you create a neural network that learns this relationship so that it w
 
 Hint: Your network might work better if you scale the house price down. You don't have to give the answer 400...it might be better to create something that predicts the number 4, and then your answer is in the 'hundreds of thousands' etc.
 """
+
+```python
 #モジュールのインポート
 import tensorflow as tf
 import numpy as np
@@ -26,6 +28,8 @@ def house_model(y_new):
     
 prediction = house_model([7.0])
 print(prediction)
+
+```
 
 """
 Expected
