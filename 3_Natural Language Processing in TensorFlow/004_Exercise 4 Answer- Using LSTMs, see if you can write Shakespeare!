@@ -133,3 +133,6 @@ for _ in range(next_words):
     #seedtrextに文字を追加
 	seed_text += " " + output_word
 print(seed_text)
+"""
+Help me Obi Wan Kenobi, you're my only hope the fairest and new mother out of wastes me still right ill out her lie still thee it he come so defy remain live shall twain ' doth stand die thee for write write of my friend still good part hate days doth groan might not be stay forth thee write for my friend bright alone and my way 'will' new rare ' is out and taught truth of thee when he have seen injury place still dead dead age ' doth deceive convert tend ill rage of time out back and so hate hate releasing doth lie in thee
+"""
