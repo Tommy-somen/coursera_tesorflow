@@ -1,0 +1,135 @@
+#モジュールのインポート
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout, Bidirectional
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
+# Figure out how to import regularizers
+#regularizerのインポート
+from tensorflow.keras import regularizers
+#one-hot-encoding用のtensorflow.keras.utils.to_categorical(使用するデータ, num_classes=分類数)
+import tensorflow.keras.utils as ku 
+import numpy as np 
+
+#Tokenizerインスタンスの作成
+tokenizer = Tokenizer()
+#データの読み込み
+!wget --no-check-certificate \
+    https://storage.googleapis.com/laurencemoroney-blog.appspot.com/sonnets.txt \
+    -O /tmp/sonnets.txt
+data = open('/tmp/sonnets.txt').read()
+
+#corpus変数に小文字・改行したデータを格納
+corpus = data.lower().split("\n")
+
+#テキストのトークン化
+tokenizer.fit_on_texts(corpus)
+#インデックス化
+total_words = len(tokenizer.word_index) + 1
+
+# create input sequences using list of tokens
+#入力するシーケンスの作成
+input_sequences = []
+for line in corpus:
+改行ごとにリストを作成
+	token_list = tokenizer.texts_to_sequences([line])[0]
+	for i in range(1, len(token_list)):
+  #n-gramの作成
+		n_gram_sequence = token_list[:i+1]
+		input_sequences.append(n_gram_sequence)
+
+
+# pad sequencesの作成 
+max_sequence_len = max([len(x) for x in input_sequences])
+input_sequences = np.array(pad_sequences(input_sequences, maxlen=max_sequence_len, padding='pre'))
+
+# create predictors and label
+#パディングしたn-gramについて、最後の文字をlabel、それ以外をsentenceデータとする
+predictors, label = input_sequences[:,:-1],input_sequences[:,-1]
+#labelデータをone-hot-encodingする
+label = ku.to_categorical(label, num_classes=total_words)
+
+#モデルの構築 →今回はSequentialインスタンスを作成して、addで層を追加するタイプ。
+model = Sequential()
+#埋め込み層
+model.add(Embedding(total_words, 100, input_length=max_sequence_len-1))
+#LSTM層(return_sequences=Trueでoutputの次元を変更しないように設定する)
+model.add(Bidirectional(LSTM(150, return_sequences=True)))
+#Dropout層
+model.add(Dropout(0.2))
+#LSTM層
+model.add(LSTM(100))
+#正則化込みの中間層
+model.add(Dense(total_words/2,activation="relu",kernel_regularizer=regularizers.l2(0.01)))
+model.add(Dense(total_words,activation="softmax"))
+
+#モデルのコンパイル
+model.compile(optimizer="adam", loss="categorical_crossentropy",metrics=["accuracy"])
+print(model.summary())
+"""
+Model: "sequential_8"
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+embedding_8 (Embedding)      (None, 10, 100)           321100    
+_________________________________________________________________
+bidirectional_7 (Bidirection (None, 10, 300)           301200    
+_________________________________________________________________
+dropout_7 (Dropout)          (None, 10, 300)           0         
+_________________________________________________________________
+lstm_14 (LSTM)               (None, 100)               160400    
+_________________________________________________________________
+dense_12 (Dense)             (None, 1605)              162105    
+_________________________________________________________________
+dense_13 (Dense)             (None, 3211)              5156866   
+=================================================================
+Total params: 6,101,671
+Trainable params: 6,101,671
+Non-trainable params: 0
+_________________________________________________________________
+None
+"""
+
+#モデルのフィッティング
+history = model.fit(predictors, label, epochs=100, verbose=1)
+
+#モデルの可視化
+import matplotlib.pyplot as plt
+acc = history.history['accuracy']
+loss = history.history['loss']
+
+epochs = range(len(acc))
+
+plt.plot(epochs, acc, 'b', label='Training accuracy')
+plt.title('Training accuracy')
+
+plt.figure()
+
+plt.plot(epochs, loss, 'b', label='Training Loss')
+plt.title('Training loss')
+plt.legend()
+
+plt.show()
+
+#seed_textを用いて、その次に来るワードを推定させる
+seed_text = "Help me Obi Wan Kenobi, you're my only hope"
+#seed_textの次に何ワード推定させるかのパラメータ
+next_words = 100
+  
+for _ in range(next_words):
+#seed_textの内容をシーケンス化
+	token_list = tokenizer.texts_to_sequences([seed_text])[0]
+#seed_textをパディング化
+	token_list = pad_sequences([token_list], maxlen=max_sequence_len-1, padding='pre')
+#次の一文字を予測する(index)
+	predicted = model.predict_classes(token_list, verbose=0)
+	output_word = ""
+#word_index.items()にあるindexと比較してwordを検索
+	for word, index in tokenizer.word_index.items():
+		if index == predicted:
+    #検索に成功したらoutput_wordに格納
+			output_word = word
+			break
+    #seedtrextに文字を追加
+	seed_text += " " + output_word
+print(seed_text)
